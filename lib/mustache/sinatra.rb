@@ -25,6 +25,10 @@ class Mustache
   #     # we'd want to do `set :namespace, Hurl::App`
   #     set :namespace, Hurl
   #
+  #     # This is a way to make sure view specific helper methods are included
+  #     # in all your View classes.
+  #     mustache_helpers Sinatra::ViewHelpers
+  #
   #     get '/stats' do
   #       mustache :stats
   #     end
@@ -107,6 +111,22 @@ class Mustache
 
         instance.template = data unless instance.compiled?
         instance.to_html
+      end
+    end
+    
+    def mustache_helpers(*helpers, &block)
+      if namespace.const_defined?(:Views)
+        staches = namespace::Views.constants.inject([]) do |staches, const_name|
+          if namespace::Views.const_get(const_name).ancestors.include?(Mustache)
+            staches << namespace::Views.const_get(const_name)
+          end
+          staches
+        end
+        
+        staches.each do |stache|
+          stache.class_eval(&block)  if block_given?
+          stache.send(:include, *helpers) if helpers.any?
+        end
       end
     end
 
