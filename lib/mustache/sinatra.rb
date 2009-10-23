@@ -64,15 +64,22 @@ class Mustache
           # First try to find the existing view,
           # e.g. Hurl::Views::Index
           klass = namespace::Views.const_get(name)
+          
+          unless ((RACK_ENV == 'development') || (ENV["RACK_ENV"] == 'development')) || klass.compiled?
+            # compile and cache the template when not in development environment
+            klass.template = data
+          end
 
         elsif File.exists?(file = "#{options.mustaches}/#{template}.rb")
           # Couldn't find it - try to require the file if it exists, then
           # load in the view.
           require "#{file}".chomp('.rb')
           klass = namespace::Views.const_get(name)
-
-          # compile and cache the template
-          klass.template = data
+          
+          unless (RACK_ENV == 'development') || (ENV["RACK_ENV"] == 'development')  || klass.compiled?
+            # compile and cache the template when not in development environment
+            klass.template = data
+          end
 
         else
           # Still nothing. Use the stache.
