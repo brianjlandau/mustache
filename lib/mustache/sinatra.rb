@@ -53,44 +53,19 @@ class Mustache
       # This is called by Sinatra's `render` with the proper paths
       # and, potentially, a block containing a sub-view
       def render_mustache(template, data, opts, locals, &block)
-        name = Mustache.classify(template.to_s)
+        # If you have Hurl::App::Views, namespace should be set to Hurl::App.
+        Mustache.view_namespace = options.namespace
 
-        # This is a horrible hack but we need it to know under which namespace
-        # Views is located. If you have Hurl::App::Views, namespace should be
-        # set to Hurl:App.
-        namespace = options.namespace
+        # This is probably the same as options.views, but we'll set it anyway.
+        # It's used to tell Mustache where to look for view classes.
+        Mustache.view_path = options.mustaches
 
-        if namespace.const_defined?(:Views) && namespace::Views.const_defined?(name)
-          # First try to find the existing view,
-          # e.g. Hurl::Views::Index
-          klass = namespace::Views.const_get(name)
-          
-          unless ((RACK_ENV == 'development') || (ENV["RACK_ENV"] == 'development')) || klass.compiled?
-            # compile and cache the template when not in development environment
-            klass.template = data
-          end
+        # Grab the class!
+        klass = Mustache.view_class(template)
 
-        elsif File.exists?(file = "#{options.mustaches}/#{template}.rb")
-          # Couldn't find it - try to require the file if it exists, then
-          # load in the view.
-          require "#{file}".chomp('.rb')
-          klass = namespace::Views.const_get(name)
-          
-          unless (RACK_ENV == 'development') || (ENV["RACK_ENV"] == 'development')  || klass.compiled?
-            # compile and cache the template when not in development environment
-            klass.template = data
-          end
-
-        else
-          # Still nothing. Use the stache.
-          klass = Mustache
-
-        end
-
-        # Tell the view class its extension and path so finding partials
-        # works as expected.
-        if klass.template_extension != 'mustache'
-          klass.template_extension = 'mustache'
+        # Only cache the data if this isn't the generic base class.
+        unless klass == Mustache || (RACK_ENV == 'development') || (ENV["RACK_ENV"] == 'development')  || klass.compiled?
+          klass.template = data
         end
 
         # Confusingly Sinatra's `views` setting tells Mustache where the

@@ -103,9 +103,11 @@ The most basic tag is the variable. A `{{name}}` tag in a basic
 template will try to call the `name` method on your view. If there is
 no `name` method, an exception will be raised.
 
-All variables are HTML escaped by default. If you want, for some
-reason, to return unescaped HTML you can use the triple mustache:
-`{{{name}}}`.
+All variables are HTML escaped by default. If you want to return
+unescaped HTML, use the triple mustache: `{{{name}}}`.
+
+By default a variable "miss" returns an empty string. You can
+configure this by setting `Mustache.raise_on_context_miss` to true.
 
 ### Boolean Sections
 
@@ -174,7 +176,7 @@ Will render as follows:
 
 ### Partials
 
-Partials begin with a less than sign, like `{{< box}}`.
+Partials begin with a greater than sign, like `{{> box}}`.
 
 If a partial's view is loaded, we use that to render the HTML. If
 nothing is loaded we render the template directly using our current context.
@@ -215,7 +217,7 @@ ctemplate and friends want you to hand a dictionary to the template
 processor. Mustache supports a similar concept. Feel free to mix the
 class-based and this more procedural style at your leisure.
 
-Given this template (winner.html):
+Given this template (winner.mustache):
 
     Hello {{name}}
     You have just won ${{value}}!
@@ -247,7 +249,7 @@ A word on templates. By default, a view will try to find its template
 on disk by searching for an HTML file in the current directory that
 follows the classic Ruby naming convention.
 
-    TemplatePartial => ./template_partial.html
+    TemplatePartial => ./template_partial.mustache
 
 You can set the search path using `Mustache.template_path`. It can be set on a
 class by class basis:
@@ -257,13 +259,13 @@ class by class basis:
       ... etc ...
     end
 
-Now `Simple` will look for `simple.html` in the directory it resides
+Now `Simple` will look for `simple.mustache` in the directory it resides
 in, no matter the cwd.
 
 If you want to just change what template is used you can set
 `Mustache.template_file` directly:
 
-    Simple.template_file = './blah.html'
+    Simple.template_file = './blah.mustache'
 
 Mustache also allows you to define the extension it'll use.
 
@@ -281,6 +283,15 @@ Or set a different template for a single instance:
     Simple.new.template = 'Hi {{person}}!'
 
 Whatever works.
+
+
+Views
+-----
+
+Mustache supports a bit of magic when it comes to views. If you're
+authoring a plugin or extension for a web framework (Sinatra, Rails,
+etc), check out the `view_namespace` and `view_path` settings on the
+`Mustache` class. They will surely provide needed assistance.
 
 
 Helpers
@@ -364,11 +375,36 @@ An example Sinatra application is also provided:
 <http://github.com/defunkt/mustache-sinatra-example>
 
 
+[Rack::Bug][4]
+---------
+
+Mustache also ships with a `Rack::Bug` panel. In your `config.ru` add
+the following code:
+
+    require 'rack/bug/panels/mustache_panel'
+    use Rack::Bug::MustachePanel
+
+Using Rails? Add this to your initializer or environment file:
+
+    require 'rack/bug/panels/mustache_panel'
+    config.middleware.use "Rack::Bug::MustachePanel"
+
+[![Rack::Bug](http://img.skitch.com/20091027-xyf4h1yxnefpp7usyddrcmc7dn.png)][5]
+
+
 Vim
 ---
 
 Thanks to [Juvenn Woo](http://github.com/juvenn) for mustache.vim. It
 is included under the contrib/ directory.
+
+
+Emacs
+----
+
+tpl-mode.el is included under the contrib/ directory for any Emacs users.
+Based on Google's tpl-mode for ctemplates, it adds support for Mustache's
+more lenient tag values and includes a few commands for your editing pleasure.
 
 
 Installation
@@ -405,3 +441,5 @@ Meta
 [1]: http://code.google.com/p/google-ctemplate/
 [2]: http://www.ivan.fomichev.name/2008/05/erlang-template-engine-prototype.html
 [3]: http://google-ctemplate.googlecode.com/svn/trunk/doc/howto.html
+[4]: http://github.com/brynary/rack-bug/
+[5]: http://img.skitch.com/20091027-n8pxwwx8r61tc318a15q1n6m14.png

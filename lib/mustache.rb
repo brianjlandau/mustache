@@ -7,7 +7,7 @@ require 'mustache/context'
 # The typical Mustache workflow is as follows:
 #
 # * Create a Mustache subclass: class Stats < Mustache
-# * Create a template: stats.html
+# * Create a template: stats.mustache
 # * Instantiate an instance: view = Stats.new
 # * Render that instance: view.render
 #
@@ -30,12 +30,12 @@ require 'mustache/context'
 # looking for a template. By default it is "."
 # Setting it to /usr/local/templates, for example, means (given all
 # other settings are default) a Mustache subclass `Stats` will try to
-# load /usr/local/templates/stats.html
+# load /usr/local/templates/stats.mustache
 #
 # * template_extension
 #
 # The `template_extension` is the extension Mustache uses when looking
-# for template files. By default it is "html"
+# for template files. By default it is "mustache"
 #
 # * template_file
 #
@@ -56,6 +56,19 @@ require 'mustache/context'
 #   view.template = "Hi, {{person}}!"
 #   view[:person] = 'Mom'
 #   view.render # => Hi, mom!
+#
+# * view_namespace
+#
+# To make life easy on those developing Mustache plugins for web frameworks or
+# other libraries, Mustache will attempt to load view classes (i.e. Mustache
+# subclasses) using the `view_class` class method. The `view_namespace` tells
+# Mustache under which constant view classes live. By default it is `Object`.
+#
+# * view_path
+#
+# Similar to `template_path`, the `view_path` option tells Mustache where to look
+# for files containing view classes when using the `view_class` method.
+#
 class Mustache
   # Helper method for quickly instantiating and rendering a view.
   def self.render(*args)
@@ -93,9 +106,9 @@ class Mustache
     self.template_path = path
   end
 
-  # A Mustache template's default extension is 'html'
+  # A Mustache template's default extension is 'mustache'
   def self.template_extension
-    @template_extension ||= 'html'
+    @template_extension ||= 'mustache'
   end
 
   def self.template_extension=(template_extension)
@@ -104,7 +117,7 @@ class Mustache
   end
 
   # The template file is the absolute path of the file Mustache will
-  # use as its template. By default it's ./class_name.html
+  # use as its template. By default it's ./class_name.mustache
   def self.template_file
     @template_file || "#{path}/#{underscore}.#{template_extension}"
   end
@@ -124,6 +137,77 @@ class Mustache
 
   def self.template=(template)
     @template = templateify(template)
+  end
+
+  # The constant under which Mustache will look for views. By default it's
+  # `Object`, but it might be nice to set it to something like `Hurl::Views` if
+  # your app's main namespace is `Hurl`.
+  def self.view_namespace
+    @view_namespace || Object
+  end
+
+  def self.view_namespace=(namespace)
+    @view_namespace = namespace
+  end
+
+  # Mustache searches the view path for .rb files to require when asked to find a
+  # view class. Defaults to "."
+  def self.view_path
+    @view_path ||= '.'
+  end
+
+  def self.view_path=(path)
+    @view_path = path
+  end
+
+  # When given a symbol or string representing a class, will try to produce an
+  # appropriate view class.
+  # e.g.
+  #   Mustache.view_namespace = Hurl::Views
+  #   Mustache.view_class(:Partial) # => Hurl::Views::Partial
+  def self.view_class(name)
+    if name != classify(name.to_s)
+      name = classify(name.to_s)
+    end
+
+    # Emptiness begets emptiness.
+    if name.to_s == ''
+      return Mustache
+    end
+
+    file_name = underscore(name)
+    namespace = view_namespace
+
+    if namespace.const_defined?(:Views) && namespace::Views.const_defined?(name)
+      namespace::Views.const_get(name)
+    elsif namespace.const_defined?(name)
+      namespace.const_get(name)
+    elsif File.exists?(file = "#{view_path}/#{file_name}.rb")
+      require "#{file}".chomp('.rb')
+      if namespace.const_defined?(:Views)
+        namespace::Views.const_get(name)
+      else
+        namespace.const_get(name)
+      end
+    else
+      Mustache
+    end
+  rescue NameError
+    Mustache
+  end
+
+  # Should an exception be raised when we cannot find a corresponding method
+  # or key in the current context? By default this is false to emulate ctemplate's
+  # behavior, but it may be useful to enable when debugging or developing.
+  #
+  # If set to true and there is a context miss, `Mustache::ContextMiss` will
+  # be raised.
+  def self.raise_on_context_miss?
+    @raise_on_context_miss
+  end
+
+  def self.raise_on_context_miss=(boolean)
+    @raise_on_context_miss = boolean
   end
 
   # Has this template already been compiled? Compilation is somewhat
@@ -177,6 +261,12 @@ class Mustache
   def template=(template)
     @template = templateify(template)
   end
+
+  # Instance level version of `Mustache.raise_on_context_miss?`
+  def raise_on_context_miss?
+    self.class.raise_on_context_miss? || @raise_on_context_miss
+  end
+  attr_writer :raise_on_context_miss
 
   # A helper method which gives access to the context at a given time.
   # Kind of a hack for now, but useful when you're in an iterating section

@@ -32,7 +32,7 @@ class Mustache
 
     # Expects a Mustache template as a string along with a template
     # path, which it uses to find partials.
-    def initialize(source, template_path = '.', template_extension = 'html')
+    def initialize(source, template_path = '.', template_extension = 'mustache')
       @source = source
       @template_path = template_path
       @template_extension = template_extension
@@ -103,10 +103,10 @@ class Mustache
     # 1. Escaped variable tags - {{var}}
     # 2. Unescaped variable tags - {{{var}}}
     # 3. Comment variable tags - {{! comment}
-    # 4. Partial tags - {{< partial_name }}
+    # 4. Partial tags - {{> partial_name }}
     def compile_tags(src)
       res = ""
-      while src =~ /#{otag}(#|=|!|<|\{)?(.+?)\1?#{ctag}+/
+      while src =~ /#{otag}(#|=|!|<|>|\{)?(.+?)\1?#{ctag}+/
         res << str($`)
         case $1
         when '#'
@@ -117,7 +117,7 @@ class Mustache
           # ignore comments
         when '='
           self.otag, self.ctag = $2.strip.split(' ', 2)
-        when '<'
+        when '>', '<'
           res << compile_partial($2.strip)
         when '{'
           res << utag($2.strip)
@@ -131,8 +131,8 @@ class Mustache
 
     # Partials are basically a way to render views from inside other views.
     def compile_partial(name)
-      klass = Mustache.classify(name)
-      if Object.const_defined?(klass)
+      klass = Mustache.view_class(name)
+      if klass != Mustache
         ev("#{klass}.render")
       else
         src = File.read("#{@template_path}/#{name}.#{@template_extension}")

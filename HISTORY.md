@@ -1,7 +1,33 @@
-## 0.3.3 (2009-??-??)
+## 0.4.3 (2009-??-??)
 
+* ctemplate compat: Partials are indicated by >, not <
+
+## 0.4.2 (2009-10-28)
+
+* Bugfix: Ignore bad constant names when autoloading
+
+## 0.4.1 (2009-10-27)
+
+* Partials now respect the `view_namespace` setting.
+* Added tpl-mode.el to contrib/ for us Emacs users.
+* Rack::Bug bugfix: ensure benchmark is required before using it
+* Rack::Bug: truncate too-large variables (click expands them)
+
+## 0.4.0 (2009-10-27)
+
+* Stopped raising context miss exceptions by default
+* Added `Mustache.raise_on_context_miss` setting (defaults to false)
+* Throw Mustache::ContextMiss when raise_on_context_miss is true and
+  we encounter a miss.
+* The default template extension is now "mustache" (instead of "html").
+* Added the `view_namespace` and `view_path` settings to `Mustache`
+* Added `Mustache.view_class` method which autoloads a class using the
+  new `view_namespace` and `view_path` settings. Should be used by
+  plugin developers.
+* Updated the Sinatra extension to use the new `view_class` method
 * Unclosed sections now throw a helpful error message
 * Report line numbers on unclosed section errors
+* Added Rack::Bug panel
 
 ## 0.3.2 (2009-10-19)
 
