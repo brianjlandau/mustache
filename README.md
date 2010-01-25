@@ -178,11 +178,30 @@ Will render as follows:
 
 Partials begin with a greater than sign, like `{{> box}}`.
 
-If a partial's view is loaded, we use that to render the HTML. If
-nothing is loaded we render the template directly using our current context.
+It is useful to think of partials as a "template expansion" - that is,
+the actual partial tag will be replaced with the content of the
+partial. Therefor partials share the current context.
 
-In this way partials can reference variables or sections the calling
-view defines.
+For example, this template and partial:
+
+    base.mustache
+    Names:
+    {{# names }}
+      {{> user }}
+    {{/ names }}
+
+    user.mustache:
+    <strong>{{ name }}</strong>
+
+Can be thought of as a single, expanded template:
+
+    Names:
+    {{# names }}
+      <strong>{{ name }}</strong>
+    {{/ names }}
+
+Have partial-specific code you want to share between view classes?
+Consider using a module and including it.
 
 
 ### Set Delimiter
@@ -376,7 +395,7 @@ An example Sinatra application is also provided:
 
 
 [Rack::Bug][4]
----------
+--------------
 
 Mustache also ships with a `Rack::Bug` panel. In your `config.ru` add
 the following code:
@@ -400,11 +419,79 @@ is included under the contrib/ directory.
 
 
 Emacs
-----
+-----
 
 tpl-mode.el is included under the contrib/ directory for any Emacs users.
 Based on Google's tpl-mode for ctemplates, it adds support for Mustache's
 more lenient tag values and includes a few commands for your editing pleasure.
+
+
+TextMate
+--------
+
+Check out Tekkub's
+[Mustache.tmbundle](http://github.com/tekkub/Mustache.tmbundle).
+
+
+Command Line
+------------
+
+Mustache includes a `mustache` script for rendering templates on the
+command line. This can be useful when designing HTML that will
+eventually be included in a website: instead of having to format the
+HTML as Mustache later, you can do it now!
+
+The script expects a Mustache template on STDIN with YAML
+frontmatter. An example looks like this:
+
+    $ cat complete.mustache
+    ---
+    names: [ {name: chris}, {name: mark}, {name: scott} ]
+    ---
+    {{#names}}
+      Hi {{name}}!
+    {{/names}}
+
+    $ mustache < complete.mustache
+    Hi chris!
+    Hi mark!
+    Hi scott!
+
+You can include multiple documents in your YAML frontmatter if you
+like. Then the template is evaluated once for each of them.
+
+    $ cat multiple.mustache
+    ---
+    name: chris
+    ---
+    name: mark
+    ---
+    name: scott
+    ---
+    Hi {{name}!
+    
+    $ mustache < multiple.mustache
+    Hi chris!
+    Hi mark!
+    Hi scott!
+
+It's probably more useful to keep the YAML and HTML in separate files,
+though. `cat` makes this easy:
+
+    $ cat data.yml
+    ---
+    names: [ {name: chris}, {name: mark}, {name: scott} ]
+    ---
+
+    $ cat template.mustache
+    {{#names}}
+      Hi {{name}}!
+    {{/names}}
+
+    $ cat data.yml template.mustache | mustache
+    Hi chris!
+    Hi mark!
+    Hi scott!
 
 
 Installation

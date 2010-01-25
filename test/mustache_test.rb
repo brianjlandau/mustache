@@ -1,16 +1,5 @@
-require 'test/unit'
-
-$LOAD_PATH.unshift File.dirname(__FILE__) + '/../examples'
-require 'simple'
-require 'complex_view'
-require 'view_partial'
-require 'template_partial'
-require 'escaped'
-require 'unescaped'
-require 'comments'
-require 'passenger'
-require 'delimiters'
-require 'double_section'
+$LOAD_PATH.unshift File.dirname(__FILE__)
+require 'helper'
 
 class MustacheTest < Test::Unit::TestCase
   def test_passenger
@@ -113,46 +102,15 @@ end_simple
     assert_equal 'Hi mom!', view.render
   end
 
-  def test_view_partial
-    assert_equal <<-end_partial.strip, ViewPartial.render
-<h1>Welcome</h1>
-Hello Chris
-You have just won $10000!
-Well, $6000.0, after taxes.
-
-<h3>Fair enough, right?</h3>
-end_partial
-  end
-
-  def test_template_partial
-    assert_equal <<-end_partial.strip, TemplatePartial.render
-<h1>Welcome</h1>
-Again, Welcome!
-end_partial
-  end
-
-  def test_template_partial_with_custom_extension
-    partial = Class.new(TemplatePartial)
-    partial.template_extension = 'txt'
-    partial.template_path = File.dirname(__FILE__) + '/../examples'
-
-    assert_equal <<-end_partial.strip, partial.render.strip
-Welcome
--------
-
-## Again, Welcome! ##
-end_partial
-  end
-
   def test_delimiters
-    assert_equal <<-end_partial, Delimiters.render
+    assert_equal <<-end_template, Delimiters.render
 
 * It worked the first time.
 
 * And it worked the second time.
 
 * Then, surprisingly, it worked the third time.
-end_partial
+end_template
   end
 
   def test_double_section
@@ -165,6 +123,12 @@ end_section
 
   def test_comments
     assert_equal "<h1>A Comedy of Errors</h1>\n", Comments.render
+  end
+
+  def test_multi_linecomments
+    view = Comments.new
+    view.template = "<h1>{{title}}{{! just something interesting... \n#or not... }}</h1>\n"
+    assert_equal "<h1>A Comedy of Errors</h1>\n", view.render
   end
 
   def test_escaped

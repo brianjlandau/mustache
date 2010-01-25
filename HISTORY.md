@@ -1,6 +1,15 @@
-## 0.4.3 (2009-??-??)
+## 0.5.1 (2009-12-15)
 
+* Added "mail merge" functionality to `mustache` script.
+* Support for multi-line tags (useful for comments)
+* Sinatra Bugfix: Use Sinatra app's view path, not Sinatra base class'.
+
+## 0.5.0 (2009-11-23)
+
+* Partial classes are no longer supported. Use modules!
+* Added `mustache` script for rendering templates on the command line.
 * ctemplate compat: Partials are indicated by >, not <
+* Bugfix: Context miss should return nil, not empty string. Fixes 1.9.x
 
 ## 0.4.2 (2009-10-28)
 
