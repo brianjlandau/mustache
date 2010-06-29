@@ -14,8 +14,8 @@
 ;;;    (add-hook 'tpl-mode-hook '(lambda () (font-lock-mode 1)))
 ;;; ---
 ;;;
-;;; While the CTemplate language can be used for any types of text,
-;;; this mode is intended for using CTemplate to write HTML.
+;;; While the Mustache language can be used for any types of text,
+;;; this mode is intended for using Mustache to write HTML.
 ;;;
 ;;; The indentation still has minor bugs due to the fact that
 ;;; templates do not require valid HTML.
@@ -75,7 +75,7 @@
 
 ;; Constant regular expressions to identify template elements.
 (defconst tpl-mode-tpl-token "[a-zA-Z_][a-zA-Z0-9_:=\?!-]*?")
-(defconst tpl-mode-section (concat "\\({{[#/]\s*"
+(defconst tpl-mode-section (concat "\\({{[#^/]\s*"
                                    tpl-mode-tpl-token
                                    "\s*}}\\)"))
 (defconst tpl-mode-open-section (concat "\\({{#\s*"
@@ -271,4 +271,8 @@
   (setq font-lock-defaults '(tpl-mode-font-lock-keywords))
   (run-hooks 'tpl-mode-hook))
 
-(provide 'tpl-mode)
+;; Automatically load tpl-mode for .mustache files.
+(add-to-list 'auto-mode-alist '("\\.mustache$" . tpl-mode))
+(add-hook 'tpl-mode-hook '(lambda () (font-lock-mode 1)))
+
+(provide 'mustache-mode)

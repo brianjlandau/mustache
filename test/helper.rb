@@ -1,13 +1,7 @@
 require 'test/unit'
 
-$LOAD_PATH.unshift File.dirname(__FILE__) + '/../examples'
-require 'simple'
-require 'complex_view'
-require 'partial_with_module'
-require 'template_partial'
-require 'escaped'
-require 'unescaped'
-require 'comments'
-require 'passenger'
-require 'delimiters'
-require 'double_section'
+$LOAD_PATH.unshift File.dirname(__FILE__) + '/fixtures'
+
+Dir[File.dirname(__FILE__) + '/fixtures/*.rb'].each do |f|
+  require f
+end

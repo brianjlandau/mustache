@@ -1,3 +1,3 @@
 class Mustache
-  Version = '0.5.1'
+  Version = VERSION = '0.11.2'
 end
