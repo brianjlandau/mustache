@@ -23,18 +23,28 @@ class Mustache
     # If the Mustache view handling the rendering (e.g. the view
     # representing your profile page or some other template) responds
     # to `partial`, we call it and render the result.
-    def partial(name)
+    def partial(name, indentation = '')
       # Look for the first Mustache in the stack.
       mustache = mustache_in_stack
 
-      # Call its `partial` method and render the result.
-      mustache.render(mustache.partial(name), self)
+      # Indent the partial template by the given indentation.
+      part = mustache.partial(name).to_s.gsub(/^/, indentation)
+
+      # Call the Mustache's `partial` method and render the result.
+      result = mustache.render(part, self)
     end
 
     # Find the first Mustache in the stack. If we're being rendered
     # inside a Mustache object as a context, we'll use that one.
     def mustache_in_stack
       @stack.detect { |frame| frame.is_a?(Mustache) }
+    end
+
+    # Allows customization of how Mustache escapes things.
+    #
+    # Returns a String.
+    def escapeHTML(str)
+      mustache_in_stack.escapeHTML(str)
     end
 
     # Adds a new object to the context's internal stack.
@@ -86,20 +96,44 @@ class Mustache
         # Prevent infinite recursion.
         next if frame == self
 
-        # Is this frame a hash?
-        hash = frame.respond_to?(:has_key?)
-
-        if hash && frame.has_key?(name)
-          return frame[name]
-        elsif hash && frame.has_key?(name.to_s)
-          return frame[name.to_s]
-        elsif !hash && frame.respond_to?(name)
-          return frame.__send__(name)
+        value = find(frame, name, :__missing)
+        if value != :__missing
+          return value
         end
       end
 
       if default == :__raise || mustache_in_stack.raise_on_context_miss?
         raise ContextMiss.new("Can't find #{name} in #{@stack.inspect}")
+      else
+        default
+      end
+    end
+
+    # Finds a key in an object, using whatever method is most
+    # appropriate. If the object is a hash, does a simple hash lookup.
+    # If it's an object that responds to the key as a method call,
+    # invokes that method. You get the idea.
+    #
+    #     obj - The object to perform the lookup on.
+    #     key - The key whose value you want.
+    # default - An optional default value, to return if the
+    #           key is not found.
+    #
+    # Returns the value of key in obj if it is found and default otherwise.
+    def find(obj, key, default = nil)
+      hash = obj.respond_to?(:has_key?)
+
+      if hash && obj.has_key?(key)
+        obj[key]
+      elsif hash && obj.has_key?(key.to_s)
+        obj[key.to_s]
+      elsif !hash && obj.respond_to?(key)
+        meth = obj.method(key) rescue proc { obj.send(key) }
+        if meth.arity == 1
+          meth.to_proc
+        else
+          meth[]
+        end
       else
         default
       end

@@ -61,7 +61,7 @@ We've got an `examples` folder but here's the canonical one:
       end
 
       def taxed_value
-        value - (value * 0.4)
+        value * 0.6
       end
 
       def in_ca
@@ -208,9 +208,9 @@ you want to use in all your views? No problem.
 This is just Ruby, after all.
 
     module ViewHelpers
-      def gravatar(email, size = 30)
-        gravatar_id = Digest::MD5.hexdigest(email.to_s.strip.downcase)
-        gravatar_for_id(gravatar_id, size)
+      def gravatar
+        gravatar_id = Digest::MD5.hexdigest(self[:email].to_s.strip.downcase)
+        gravatar_for_id(gravatar_id)
       end
 
       def gravatar_for_id(gid, size = 30)
@@ -236,11 +236,15 @@ Then just include it:
       end
 
       def taxed_value
-        value - (value * 0.4)
+        value * 0.6
       end
 
       def in_ca
         true
+      end
+
+      def users
+        User.all
       end
     end
 
@@ -265,7 +269,13 @@ Now:
 
     Simple.new(request.ssl?).render
 
-Convoluted but you get the idea.
+Finally, our template might look like this:
+
+    <ul>
+      {{# users}}
+        <li><img src="{{ gravatar }}"> {{ login }}</li>
+      {{/ users}}
+    </ul>
 
 
 Sinatra

@@ -21,7 +21,6 @@ class Mustache
     # path, which it uses to find partials.
     def initialize(source)
       @source = source
-      @tmpid = 0
     end
 
     # Renders the `@source` Mustache template using the given
@@ -47,7 +46,7 @@ class Mustache
     # Does the dirty work of transforming a Mustache template into an
     # interpolation-friendly Ruby string.
     def compile(src = @source)
-      Generator.new.compile(tokens)
+      Generator.new.compile(tokens(src))
     end
     alias_method :to_s, :compile
 

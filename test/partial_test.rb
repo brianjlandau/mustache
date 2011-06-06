@@ -23,8 +23,8 @@ end_partial
 
   def test_view_partial_inherits_context
     klass = Class.new(TemplatePartial)
-    klass.template_path = File.dirname(__FILE__) + '/fixtures'
     view = klass.new
+    view.template_path = File.dirname(__FILE__) + '/fixtures'
     view[:titles] = [{:title => :One}, {:title => :Two}]
     view.template = <<-end_template
 <h1>Context Test</h1>
@@ -99,36 +99,36 @@ end_partial
   <body>
     <ul>
       <li>
-  1
-  <ul>
-    <li>
-  2
-  <ul>
-    <li>
-  3
-  <ul>
+        1
+        <ul>
+          <li>
+            2
+            <ul>
+              <li>
+                3
+                <ul>
+                </ul>
+              </li>
+            </ul>
+          </li>
+          <li>
+            4
+            <ul>
+              <li>
+                5
+                <ul>
+                  <li>
+                    6
+                    <ul>
+                    </ul>
+                  </li>
+                </ul>
+              </li>
+            </ul>
+          </li>
+        </ul>
+      </li>
     </ul>
-</li>
-    </ul>
-</li>
-    <li>
-  4
-  <ul>
-    <li>
-  5
-  <ul>
-    <li>
-  6
-  <ul>
-    </ul>
-</li>
-    </ul>
-</li>
-    </ul>
-</li>
-    </ul>
-</li>
-      </ul>
   </body>
 </html>
 end_partial

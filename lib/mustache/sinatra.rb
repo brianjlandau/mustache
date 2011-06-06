@@ -43,6 +43,18 @@ class Mustache
   # You can indeed use layouts with this library. Where you'd normally
   # <%= yield %> you instead {{{yield}}} - the body of the subview is
   # set to the `yield` variable and made available to you.
+  #
+  # If you don't want the Sinatra extension to look up your view class,
+  # maybe because you've already loaded it or you're pulling it in from
+  # a gem, you can hand the `mustache` helper a Mustache subclass directly:
+  #
+  #   # Assuming `class Omnigollum::Login < Mustache`
+  #   get '/login' do
+  #     @title = "Log In"
+  #     require 'lib/omnigollum/views/login'
+  #     mustache Omnigollum::Login
+  #   end
+  #
   module Sinatra
     module Helpers
       # Call this in your Sinatra routes.
@@ -54,11 +66,6 @@ class Mustache
         if settings.respond_to?(:mustache)
           options = settings.send(:mustache).merge(options)
         end
-
-        # Find and cache the view class we want. This ensures the
-        # compiled template is cached, too - no looking up and
-        # compiling templates on each page load.
-        klass = mustache_class(template, options)
 
         # If they aren't explicitly disabling layouts, try to find
         # one.
@@ -79,12 +86,24 @@ class Mustache
           else
             layout = layout.new
           end
-
-          # Does the view subclass the layout? If so we'll use the
-          # view to render the layout so you can override layout
-          # methods in your view - tricky.
-          view_subclasses_layout = klass < layout.class if layout
         end
+
+        # If instead of a symbol they gave us a Mustache class,
+        # use that for rendering.
+        klass = template if template.is_a?(Class) && template < Mustache
+
+        # Find and cache the view class we want if we don't have
+        # one yet. This ensures the compiled template is cached,
+        # too - no looking up and compiling templates on each page
+        # load.
+        if klass.nil?
+          klass = mustache_class(template, options)
+        end
+
+        # Does the view subclass the layout? If so we'll use the
+        # view to render the layout so you can override layout
+        # methods in your view - tricky.
+        view_subclasses_layout = klass < layout.class if layout
 
         # Create a new instance for playing with.
         instance = klass.new
@@ -110,7 +129,7 @@ class Mustache
       end
 
       # Returns a View class for a given template name.
-      def mustache_class(template, options)
+      def mustache_class(template, options = {})
         @template_cache.fetch(:mustache, template) do
           compile_mustache(template, options)
         end
@@ -121,6 +140,10 @@ class Mustache
       def compile_mustache(view, options = {})
         options[:templates] ||= settings.views if settings.respond_to?(:views)
         options[:namespace] ||= self.class
+
+        unless options[:namespace].to_s.include? 'Views'
+          options[:namespace] = options[:namespace].const_get(:Views)
+        end
 
         factory = Class.new(Mustache) do
           self.view_namespace = options[:namespace]
@@ -136,6 +159,8 @@ class Mustache
         # Try to find the view class for a given view, e.g.
         # :view => Hurl::Views::Index.
         klass = factory.view_class(view)
+        klass.view_namespace = options[:namespace]
+        klass.view_path      = options[:views]
 
         # If there is no view class, issue a warning and use the one
         # we just generated to cache the compiled template.

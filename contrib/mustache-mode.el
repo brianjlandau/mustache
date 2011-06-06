@@ -74,7 +74,7 @@
   "The basic indentation offset.")
 
 ;; Constant regular expressions to identify template elements.
-(defconst tpl-mode-tpl-token "[a-zA-Z_][a-zA-Z0-9_:=\?!-]*?")
+(defconst tpl-mode-tpl-token "[a-zA-Z_.][a-zA-Z0-9_:=\?!.-]*?")
 (defconst tpl-mode-section (concat "\\({{[#^/]\s*"
                                    tpl-mode-tpl-token
                                    "\s*}}\\)"))
@@ -114,6 +114,7 @@
       "big" "blockquote" "body" "button" "caption" "center" "cite"
       "code" "col" "colgroup" "dd" "del" "dfn" "dif" "div" "dl"
       "dt" "em" "fieldset" "font" "form" "frame" "frameset" "h1"
+      "header" "nav" "footer" "section"
       "h2" "h3" "h4" "h5" "h6" "head" "html" "i" "iframe" "ins"
       "kbd" "label" "legend" "li" "link" "map" "menu" "noframes"
       "noscript" "object" "ol" "optgroup" "option" "p" "pre" "q"
